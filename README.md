@@ -116,6 +116,7 @@ brasiltec-ead/
 │   ├── email.js            # e-mail transacional (Resend, opcional)
 │   ├── services.js         # regras de negócio compartilhadas
 │   └── api/                # rotas públicas, auth, aluno, admin
+├── templates/              # index.html da SPA + seed.sql do Turso
 ├── scripts/                # reset de banco e geração de materiais
 ├── tests/                  # suíte de integração (banco temporário)
 ├── docs/                   # arquitetura, administração, LGPD e deploy
@@ -167,8 +168,9 @@ O projeto está adaptado ao modelo serverless da Vercel:
 
 - `api/index.js` é a única função: recebe todas as rotas e delega ao servidor HTTP original.
 - `public/` é servido pelo CDN da Vercel (o rewrite só é aplicado quando não existe arquivo estático).
-- `vercel.json` define `outputDirectory`, o rewrite e o bundle da função (inclui `templates/index.html`).
+- `vercel.json` define `outputDirectory`, o rewrite e o bundle da função (inclui `templates/index.html` e `templates/seed.sql`).
 - O banco fica no **Turso** (libSQL via HTTP), porque o disco da Vercel é efêmero.
+- Em um banco vazio, o seed estático `templates/seed.sql` é aplicado em uma única chamada e protegido pela trava `seed_lock`; o seed em JS (`server/seed.js`) é usado apenas no SQLite local. As credenciais demo do admin (`admin@brasiltec.demo` / `Admin@2026`) devem ser trocadas no painel após o primeiro acesso.
 
 ### 1. Criar o banco no Turso
 

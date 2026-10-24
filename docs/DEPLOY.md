@@ -229,7 +229,13 @@ O `vercel.json` já configura:
 
 - `outputDirectory: "public"` (front-end no CDN);
 - rewrite de todas as rotas para `/api/index`;
-- `includeFiles: "public/**"` (o servidor lê `index.html` para injetar SEO).
+- `includeFiles: "templates/*"` (o servidor lê `index.html` para injetar SEO e
+  `seed.sql` para popular um banco vazio).
+
+Em um banco vazio, o seed estático `templates/seed.sql` roda uma única vez em
+uma chamada só, protegido pela trava `seed_lock`. Isso evita o timeout de
+função que ocorria ao inserir centenas de linhas via HTTP. O seed em JS
+(`server/seed.js`) continua sendo usado no SQLite local.
 
 Sem Turso em produção a aplicação falha com uma mensagem explícita — isso evita
 subir um site que "funciona" mas perde dados a cada cold start.
