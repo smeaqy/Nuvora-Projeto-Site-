@@ -9,3 +9,6 @@ data/backups/
 brand/*.ocr.json
 *.log
 .DS_Store
+
+.vercel
+.env*

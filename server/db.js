@@ -297,6 +297,11 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL
 );
 
+/* Trava de seed: garante que apenas uma instância popule um banco vazio. */
+CREATE TABLE IF NOT EXISTS seed_lock (
+  id INTEGER PRIMARY KEY CHECK (id = 1)
+);
+
 CREATE TABLE IF NOT EXISTS activity_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -451,6 +456,41 @@ function createRemoteBackend() {
   return api;
 }
 
+/* Seed estático para o driver remoto.
+   O seed em JS faz centenas de idas e voltas HTTP e não cabe no tempo de
+   execução de uma função serverless. O arquivo templates/seed.sql é gerado
+   a partir do SQLite local e aplicado em uma única chamada. */
+async function seedRemoteIfEmpty(backend) {
+  const count = await backend.get("SELECT COUNT(*) AS total FROM users");
+  if (Number(count.total) > 0) return false;
+
+  const claim = await backend.run("INSERT OR IGNORE INTO seed_lock (id) VALUES (1)");
+  if (Number(claim.changes) === 0) {
+    // Outra instância está semeando: aguarda alguns segundos para não
+    // devolver um catálogo vazio na primeira visita.
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const current = await backend.get("SELECT COUNT(*) AS total FROM users");
+      if (Number(current.total) > 0) return false;
+    }
+    return false;
+  }
+
+  try {
+    const seedFile = path.join(config.root, "templates", "seed.sql");
+    const sql = fs.readFileSync(seedFile, "utf8");
+    await backend.exec(sql);
+    return true;
+  } catch (error) {
+    try {
+      await backend.run("DELETE FROM seed_lock WHERE id = 1");
+    } catch {
+      /* noop */
+    }
+    throw error;
+  }
+}
+
 async function openDatabase() {
   if (initPromise) return initPromise;
   initPromise = (async () => {
@@ -463,8 +503,12 @@ async function openDatabase() {
     }
     backend = config.turso.url ? createRemoteBackend() : createLocalBackend();
     await backend.exec(SCHEMA_BODY);
-    const seed = require("./seed");
-    await seed.seedIfEmpty(module.exports);
+    if (config.turso.url) {
+      await seedRemoteIfEmpty(backend);
+    } else {
+      const seed = require("./seed");
+      await seed.seedIfEmpty(backend);
+    }
     return backend;
   })().catch((error) => {
     initPromise = null;
@@ -474,7 +518,7 @@ async function openDatabase() {
 }
 
 async function getDb() {
-  if (!backend) await openDatabase();
+  await openDatabase();
   return backend;
 }
 
