@@ -1,0 +1,27 @@
+{
+  "name": "brasiltec-ead",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma EAD da BrasilTec Educação — site institucional, AVA do aluno e painel administrativo.",
+  "main": "server/server.js",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "test": "node --test tests/api.test.js tests/vercel.test.js",
+    "db:reset": "node scripts/reset-db.js",
+    "materials": "node scripts/make-materials.js"
+  },
+  "keywords": [
+    "ead",
+    "educacao",
+    "brasiltec",
+    "lms"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@libsql/client": "^0.18.0"
+  }
+}

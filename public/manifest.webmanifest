@@ -1,0 +1,19 @@
+{
+  "name": "BrasilTec Educação",
+  "short_name": "BrasilTec",
+  "description": "Plataforma EAD da BrasilTec Educação — cursos técnicos, profissionalizantes e pós-graduação.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#083888",
+  "icons": [
+    {
+      "src": "/assets/img/favicon.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
